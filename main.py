@@ -1,5 +1,6 @@
 from ultralytics import YOLO
 import cv2, math, threading
+from playsound import playsound
 
 window_width = 1280
 window_height = 960
@@ -11,6 +12,12 @@ cap.set(4, window_height)
 area_threshold = 150000
 
 model = YOLO("yolo-Weights/yolov8n.pt")
+
+sound_play_timer = 0
+sound_play_timer_set = 15
+
+left_sound = "left.wav"
+right_sound = "blip.wav"
 
 classNames = ["person", "bicycle", "car", "motorbike", "aeroplane", "bus", "train", "truck", "boat",
               "traffic light", "fire hydrant", "stop sign", "parking meter", "bench", "bird", "cat",
@@ -24,11 +31,21 @@ classNames = ["person", "bicycle", "car", "motorbike", "aeroplane", "bus", "trai
               "teddy bear", "hair drier", "toothbrush"
               ]
 
+def play_left_beep():
+    playsound(left_sound)
+
+def play_right_beep():
+    playsound(right_sound)
+
 while True:
     _, img = cap.read()
     img = cv2.flip(img, 1)
 
     results = model(img, stream = True)
+
+    sound_play_timer -= 1
+
+    print(sound_play_timer)
 
     for r in results:
         boxes = r.boxes
@@ -47,8 +64,20 @@ while True:
 
                 if x_pos > window_width / 2:
                     txt = "Move Left"
+
+                    if sound_play_timer <= 0:
+                        sound_play_timer = sound_play_timer_set
+
+                        audio_thread = threading.Thread(target=play_left_beep)
+                        audio_thread.start()
                 else:
                     txt = "Move Right"
+
+                    if sound_play_timer <= 0:
+                        sound_play_timer = sound_play_timer_set
+
+                        audio_thread = threading.Thread(target=play_right_beep)
+                        audio_thread.start()
 
                 cv2.putText(img, txt, [32, 32], cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
                 cv2.rectangle(img, (x1, y1), (x2, y2), (160, 255, 255), 3)
