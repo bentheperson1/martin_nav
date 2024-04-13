@@ -20,7 +20,8 @@ sound_play_timer = 0
 sound_play_timer_set = 15
 
 left_sound = "left.wav"
-right_sound = "blip.wav"
+right_sound = "right.wav"
+stop_sound = "stop.wav"
 
 interval_size = 320
 
@@ -42,6 +43,9 @@ def play_left_beep():
 def play_right_beep():
     playsound(right_sound)
 
+def play_stop():
+    playsound(stop_sound)
+
 while True:
     _, img = cap.read()
     img = cv2.flip(img, 1)
@@ -53,39 +57,46 @@ while True:
     for r in results:
         boxes = r.boxes
 
-        for box in boxes:
-            x1, y1, x2, y2 = box.xyxy[0]
-            x1, y1, x2, y2 = int(x1), int(y1), int(x2), int(y2)
+        for index, box in enumerate(boxes):
+            if index == 0:
+                x1, y1, x2, y2 = box.xyxy[0]
+                x1, y1, x2, y2 = int(x1), int(y1), int(x2), int(y2)
 
-            area = (x2 - x1) * (y2 - y1)  
+                area = (x2 - x1) * (y2 - y1)  
 
-            if area >= area_threshold:
-                x_pos = round((x2 + x1) / 2)
-                y_pos = round((y2 + y1) / 2)
+                if area >= area_threshold:
+                    x_pos = round((x2 + x1) / 2)
+                    y_pos = round((y2 + y1) / 2)
 
-                if x_pos < center_x + interval_size and x_pos > center_x - interval_size:
-                    if x_pos > center_x:
-                        txt = "Move Left"
+                    if x_pos < center_x + interval_size and x_pos > center_x - interval_size:
+                        if x_pos > center_x:
+                            txt = "Move Left"
 
-                        if sound_play_timer <= 0:
-                            sound_play_timer = sound_play_timer_set
+                            if sound_play_timer <= 0:
+                                sound_play_timer = sound_play_timer_set
 
-                            audio_thread = threading.Thread(target=play_left_beep)
-                            audio_thread.start()
-                    else:
-                        txt = "Move Right"
+                                audio_thread = threading.Thread(target=play_left_beep)
+                                audio_thread.start()
+                        else:
+                            txt = "Move Right"
 
-                        if sound_play_timer <= 0:
-                            sound_play_timer = sound_play_timer_set
+                            if sound_play_timer <= 0:
+                                sound_play_timer = sound_play_timer_set
 
-                            audio_thread = threading.Thread(target=play_right_beep)
-                            audio_thread.start()
+                                audio_thread = threading.Thread(target=play_right_beep)
+                                audio_thread.start()
 
-                    cv2.circle(img, (x_pos, y_pos), 3, (255, 255, 255), -1)
-                    cv2.putText(img, txt, [32, 32], cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
-                    cv2.rectangle(img, (x1, y1), (x2, y2), (160, 255, 255), 3)
-                    cv2.putText(img, classNames[int(box.cls[0])], [x1, y1], cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 255), 2)
+                        cv2.circle(img, (x_pos, y_pos), 3, (255, 255, 255), -1)
+                        cv2.putText(img, txt, [32, 32], cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
+                        cv2.rectangle(img, (x1, y1), (x2, y2), (160, 255, 255), 3)
+                        cv2.putText(img, classNames[int(box.cls[0])], [x1, y1], cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 255), 2)
+            else:
+                if sound_play_timer <= 0:
+                    sound_play_timer = sound_play_timer_set
 
+                    audio_thread = threading.Thread(target=play_stop)
+                    audio_thread.start()
+    
     r_line_x = round(center_x + interval_size)
     l_line_x = round(center_x - interval_size)
     cv2.line(img, (r_line_x, 0), (r_line_x, window_height), (0,255,0),3)
