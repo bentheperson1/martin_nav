@@ -1,6 +1,8 @@
 from ultralytics import YOLO
 import cv2, math, threading
 from playsound import playsound
+import pygame
+pygame.init()
 
 window_width = 1280
 window_height = 960
@@ -12,18 +14,20 @@ cap = cv2.VideoCapture(0)
 cap.set(3, window_width)
 cap.set(4, window_height)
 
-area_threshold = 150000
+area_threshold = 100000
 
-model = YOLO("yolo-Weights/yolov8n.pt")
+model = YOLO("models/yolov8n.pt")
 
 sound_play_timer = 0
-sound_play_timer_set = 15
+sound_play_timer_set = 20
 
-left_sound = "left.wav"
-right_sound = "right.wav"
-stop_sound = "stop.wav"
+left_sound = "assets/left.wav"
+right_sound = "assets/right.wav"
+stop_sound = "assets/stop.wav"
 
-interval_size = 320
+interval_size = 350
+
+sound_interval_max = 20
 
 classNames = ["person", "bicycle", "car", "motorbike", "aeroplane", "bus", "train", "truck", "boat",
               "traffic light", "fire hydrant", "stop sign", "parking meter", "bench", "bird", "cat",
@@ -37,14 +41,13 @@ classNames = ["person", "bicycle", "car", "motorbike", "aeroplane", "bus", "trai
               "teddy bear", "hair drier", "toothbrush"
               ]
 
-def play_left_beep():
-    playsound(left_sound)
+alive_classes = ["person", "bird", "cat", "dog", "horse", "sheep", "cow", "elephant", "bear", "zebra", "giraffe"]
 
-def play_right_beep():
-    playsound(right_sound)
-
-def play_stop():
-    playsound(stop_sound)
+def play_sound(sound, pan=[1.0,1.0]):
+    sound = pygame.mixer.Sound(sound)
+    channel = pygame.mixer.find_channel()
+    channel.set_volume(pan[0], pan[1])
+    channel.play(sound)
 
 while True:
     _, img = cap.read()
@@ -65,6 +68,8 @@ while True:
                 area = (x2 - x1) * (y2 - y1)  
 
                 if area >= area_threshold:
+                    sound_play_timer_set = round(((area * 10000) / area ** 1.5))
+
                     x_pos = round((x2 + x1) / 2)
                     y_pos = round((y2 + y1) / 2)
 
@@ -75,16 +80,14 @@ while True:
                             if sound_play_timer <= 0:
                                 sound_play_timer = sound_play_timer_set
 
-                                audio_thread = threading.Thread(target=play_left_beep)
-                                audio_thread.start()
+                                play_sound(left_sound, [1.0, 0])
                         else:
                             txt = "Move Right"
 
                             if sound_play_timer <= 0:
                                 sound_play_timer = sound_play_timer_set
 
-                                audio_thread = threading.Thread(target=play_right_beep)
-                                audio_thread.start()
+                                play_sound(right_sound, [0, 1.0])
 
                         cv2.circle(img, (x_pos, y_pos), 3, (255, 255, 255), -1)
                         cv2.putText(img, txt, [32, 32], cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
@@ -94,8 +97,7 @@ while True:
                 if sound_play_timer <= 0:
                     sound_play_timer = sound_play_timer_set
 
-                    audio_thread = threading.Thread(target=play_stop)
-                    audio_thread.start()
+                    play_sound(stop_sound)
     
     r_line_x = round(center_x + interval_size)
     l_line_x = round(center_x - interval_size)
