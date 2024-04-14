@@ -5,7 +5,6 @@ def extract_frames(video_path, output_folder, frame_interval):
     if not os.path.exists(output_folder):
         os.makedirs(output_folder)
 
-    # Open the video
     video = cv2.VideoCapture(video_path)
     if not video.isOpened():
         print(f"Error: Could not open video {video_path}")
@@ -31,8 +30,8 @@ def extract_frames(video_path, output_folder, frame_interval):
     video.release()
     print(f"Finished extracting {extracted_count} frames.")
 
-video_path = 'two.mp4'  # Replace with your video path
-output_folder = 'extracted_frames2'     # Folder to save the frames
-frame_interval = 2                    # Extract every 10th frame
+video_path = 'two.mp4'
+output_folder = 'extracted_frames2'
+frame_interval = 2
 
 extract_frames(video_path, output_folder, frame_interval)

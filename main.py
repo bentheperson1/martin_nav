@@ -1,6 +1,5 @@
 from ultralytics import YOLO
 import cv2, math, threading
-from playsound import playsound
 import pygame
 pygame.init()
 
@@ -10,7 +9,7 @@ window_height = 960
 center_x = window_width / 2
 center_y = window_height / 2
 
-cap = cv2.VideoCapture(0)
+cap = cv2.VideoCapture(1)
 cap.set(3, window_width)
 cap.set(4, window_height)
 
@@ -24,6 +23,9 @@ sound_play_timer_set = 20
 left_sound = "assets/left.wav"
 right_sound = "assets/right.wav"
 stop_sound = "assets/stop.wav"
+
+left_alive_sound = "assets/left.wav"
+right_alive_sound = "assets/right.wav"
 
 interval_size = 350
 
@@ -80,14 +82,16 @@ while True:
                             if sound_play_timer <= 0:
                                 sound_play_timer = sound_play_timer_set
 
-                                play_sound(left_sound, [1.0, 0])
+                                sound = left_sound if classNames[int(box.cls[0])] != classNames[int(box.cls[0])] else left_alive_sound
+                                play_sound(sound, [1.0, 0])
                         else:
                             txt = "Move Right"
 
                             if sound_play_timer <= 0:
                                 sound_play_timer = sound_play_timer_set
 
-                                play_sound(right_sound, [0, 1.0])
+                                sound = right_sound if classNames[int(box.cls[0])] != classNames[int(box.cls[0])] else right_alive_sound
+                                play_sound(sound, [0, 1.0])
 
                         cv2.circle(img, (x_pos, y_pos), 3, (255, 255, 255), -1)
                         cv2.putText(img, txt, [32, 32], cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
