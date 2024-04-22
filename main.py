@@ -31,6 +31,8 @@ interval_size = 350
 
 sound_interval_max = 20
 
+txt = ""
+
 classNames = ["person", "bicycle", "car", "motorbike", "aeroplane", "bus", "train", "truck", "boat",
               "traffic light", "fire hydrant", "stop sign", "parking meter", "bench", "bird", "cat",
               "dog", "horse", "sheep", "cow", "elephant", "bear", "zebra", "giraffe", "backpack", "umbrella",
@@ -53,7 +55,7 @@ def play_sound(sound, pan=[1.0,1.0]):
 
 while True:
     _, img = cap.read()
-    img = cv2.flip(img, 1)
+    img = cv2.flip(img, -1)
 
     results = model(img, stream = True)
 
@@ -83,7 +85,7 @@ while True:
                                 sound_play_timer = sound_play_timer_set
 
                                 sound = left_sound if classNames[int(box.cls[0])] != classNames[int(box.cls[0])] else left_alive_sound
-                                play_sound(sound, [1.0, 0])
+                                play_sound(left_sound, [1.0, 0])
                         else:
                             txt = "Move Right"
 
@@ -91,17 +93,18 @@ while True:
                                 sound_play_timer = sound_play_timer_set
 
                                 sound = right_sound if classNames[int(box.cls[0])] != classNames[int(box.cls[0])] else right_alive_sound
-                                play_sound(sound, [0, 1.0])
+                                play_sound(right_sound, [0, 1.0])
 
                         cv2.circle(img, (x_pos, y_pos), 3, (255, 255, 255), -1)
-                        cv2.putText(img, txt, [32, 32], cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
                         cv2.rectangle(img, (x1, y1), (x2, y2), (160, 255, 255), 3)
                         cv2.putText(img, classNames[int(box.cls[0])], [x1, y1], cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 255), 2)
-            else:
+            elif index > 0:
                 if sound_play_timer <= 0:
                     sound_play_timer = sound_play_timer_set
-
+                    txt = "Stop"
                     play_sound(stop_sound)
+            
+    cv2.putText(img, txt, [32, 32], cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
     
     r_line_x = round(center_x + interval_size)
     l_line_x = round(center_x - interval_size)
